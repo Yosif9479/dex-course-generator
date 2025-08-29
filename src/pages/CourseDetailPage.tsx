@@ -6,38 +6,27 @@ import { AddButton } from '../components/AddButton';
 import { Modal } from '../components/Modal';
 import { ModuleForm } from '../components/forms/ModuleForm';
 import { useLocalStorage } from '../hooks/useLocalStorage';
-import { Course, Module } from '../types';
+import { Course } from '../types';
 
 interface CourseDetailPageProps {
   course: Course;
+  storage: ReturnType<typeof useLocalStorage>;
   onBack: () => void;
-  onSelectModule: (course: Course, module: Module) => void;
+  onSelectModule: (moduleId: string) => void;
 }
 
-export function CourseDetailPage({ course, onBack, onSelectModule }: CourseDetailPageProps) {
-  const { updateCourse, exportCourse } = useLocalStorage();
+export function CourseDetailPage({ course, storage, onBack, onSelectModule }: CourseDetailPageProps) {
+  const { addModule, deleteModule, exportCourse } = storage;
   const [showCreateModal, setShowCreateModal] = useState(false);
 
   const handleCreateModule = (name: string) => {
-    const newModule: Module = {
-      id: crypto.randomUUID(),
-      name,
-      words: []
-    };
-    
-    const updatedCourse = {
-      ...course,
-      modules: [...course.modules, newModule]
-    };
-    
-    updateCourse(course.id, { modules: updatedCourse.modules });
+    const newModule = addModule(course.id, { name, words: [] });
     setShowCreateModal(false);
-    onSelectModule(updatedCourse, newModule);
+    onSelectModule(newModule.id);
   };
 
   const handleDeleteModule = (moduleId: string) => {
-    const updatedModules = course.modules.filter(module => module.id !== moduleId);
-    updateCourse(course.id, { modules: updatedModules });
+    deleteModule(course.id, moduleId);
   };
 
   const breadcrumbItems = [
@@ -83,7 +72,7 @@ export function CourseDetailPage({ course, onBack, onSelectModule }: CourseDetai
               <ModuleCard
                 key={module.id}
                 module={module}
-                onClick={() => onSelectModule(course, module)}
+                onClick={() => onSelectModule(module.id)}
                 onDelete={() => handleDeleteModule(module.id)}
               />
             ))}

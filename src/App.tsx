@@ -4,28 +4,27 @@ import { CourseDetailPage } from './pages/CourseDetailPage';
 import { ModuleDetailPage } from './pages/ModuleDetailPage';
 import { SettingsPage } from './pages/SettingsPage';
 import { useLocalStorage } from './hooks/useLocalStorage';
-import { Course, Module } from './types';
 
 type AppState = 
   | { page: 'courses' }
-  | { page: 'course'; course: Course }
-  | { page: 'module'; course: Course; module: Module }
+  | { page: 'course'; courseId: string }
+  | { page: 'module'; courseId: string; moduleId: string }
   | { page: 'settings' };
 
 function App() {
-  const { settings, saveSettings } = useLocalStorage();
+  const storage = useLocalStorage();
   const [state, setState] = useState<AppState>({ page: 'courses' });
 
   const navigateToCourses = () => {
     setState({ page: 'courses' });
   };
 
-  const navigateToCourse = (course: Course) => {
-    setState({ page: 'course', course });
+  const navigateToCourse = (courseId: string) => {
+    setState({ page: 'course', courseId });
   };
 
-  const navigateToModule = (course: Course, module: Module) => {
-    setState({ page: 'module', course, module });
+  const navigateToModule = (courseId: string, moduleId: string) => {
+    setState({ page: 'module', courseId, moduleId });
   };
 
   const navigateToSettings = () => {
@@ -35,8 +34,8 @@ function App() {
   if (state.page === 'settings') {
     return (
       <SettingsPage
-        settings={settings}
-        onSave={saveSettings}
+        settings={storage.settings}
+        onSave={storage.saveSettings}
         onBack={navigateToCourses}
       />
     );
@@ -45,6 +44,7 @@ function App() {
   if (state.page === 'courses') {
     return (
       <CourseListPage 
+        storage={storage}
         onSelectCourse={navigateToCourse}
         onOpenSettings={navigateToSettings}
       />
@@ -52,21 +52,43 @@ function App() {
   }
 
   if (state.page === 'course') {
+    const course = storage.getCourse(state.courseId);
+    if (!course) {
+      // Course not found, navigate back to courses
+      navigateToCourses();
+      return null;
+    }
+
     return (
       <CourseDetailPage
-        course={state.course}
+        course={course}
+        storage={storage}
         onBack={navigateToCourses}
-        onSelectModule={navigateToModule}
+        onSelectModule={(moduleId) => navigateToModule(state.courseId, moduleId)}
       />
     );
   }
 
   if (state.page === 'module') {
+    const course = storage.getCourse(state.courseId);
+    const module = storage.getModule(state.courseId, state.moduleId);
+    
+    if (!course || !module) {
+      // Course or module not found, navigate back
+      if (course) {
+        navigateToCourse(state.courseId);
+      } else {
+        navigateToCourses();
+      }
+      return null;
+    }
+
     return (
       <ModuleDetailPage
-        course={state.course}
-        module={state.module}
-        onBack={() => navigateToCourse(state.course)}
+        course={course}
+        module={module}
+        storage={storage}
+        onBack={() => navigateToCourse(state.courseId)}
         onBackToCourse={navigateToCourses}
       />
     );

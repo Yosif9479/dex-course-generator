@@ -1,16 +1,29 @@
 import React from 'react';
-import { BookOpen, Download, ArrowLeft, Settings } from 'lucide-react';
+import { BookOpen, Download, ArrowLeft, Settings, Upload } from 'lucide-react';
 
 interface HeaderProps {
   title: string;
   onBack?: () => void;
   onExport?: () => void;
   onSettings?: () => void;
+  onImport?: () => void;
   showExport?: boolean;
   showSettings?: boolean;
+  showImport?: boolean;
+  importing?: boolean;
 }
 
-export function Header({ title, onBack, onExport, onSettings, showExport = false, showSettings = false }: HeaderProps) {
+export function Header({ 
+  title, 
+  onBack, 
+  onExport, 
+  onSettings, 
+  onImport,
+  showExport = false, 
+  showSettings = false,
+  showImport = false,
+  importing = false
+}: HeaderProps) {
   return (
     <header className="bg-white shadow-sm border-b border-gray-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -31,6 +44,16 @@ export function Header({ title, onBack, onExport, onSettings, showExport = false
           </div>
           
           <div className="flex items-center space-x-3">
+            {showImport && onImport && (
+              <button
+                onClick={onImport}
+                disabled={importing}
+                className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 transition-colors disabled:opacity-50"
+              >
+                <Upload className="h-4 w-4 mr-2" />
+                {importing ? 'Importing...' : 'Import'}
+              </button>
+            )}
             {showSettings && onSettings && (
               <button
                 onClick={onSettings}
